@@ -74,7 +74,7 @@ const Footer = () => {
     <FooterContainer>
       <FooterContent>
         <FooterSection>
-          <h3>ShopEasy</h3>
+          <h3>Shoplify</h3>
           <p>
             Your one-stop destination for all your shopping needs. 
             We provide high-quality products with excellent customer service.
@@ -117,7 +117,7 @@ const Footer = () => {
       </FooterContent>
 
       <Copyright>
-        &copy; 2024 ShopEasy. All rights reserved.
+        &copy; 2025 Shoplify. All rights reserved.
       </Copyright>
     </FooterContainer>
   );

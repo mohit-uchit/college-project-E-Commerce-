@@ -226,7 +226,7 @@ const Navbar = ({ onCartToggle }) => {
   return (
     <NavbarContainer className="navbar">
       <NavContent>
-        <Logo to="/" onClick={handleNavLinkClick}>ShopEasy</Logo>
+        <Logo to="/" onClick={handleNavLinkClick}>Shoplify</Logo>
 
         {/* Use $isOpen instead of isOpen for styled-components */}
         <NavLinks $isOpen={mobileMenuOpen}>
