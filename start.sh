@@ -1,14 +1,67 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-echo "Building frontend..."
-cd frontened
-npm ci
-npm run build
+# Render-ready startup script for the project backend
+# - Builds frontend if present
+# - Installs backend dependencies (prefer lockfile with npm ci)
+# - Optionally seeds the database when SEED_DB=true
+# - Starts the backend with node server.js
 
-echo "Starting backend..."
-cd ../backend
-npm ci
+cd "$(dirname "$0")" || exit 1
 
-# If dist exists, backend will serve the frontend (server.js patched to do so)
-node server.js
+echo "--- Render-ready start.sh: beginning ---"
+
+if command -v node >/dev/null 2>&1; then
+	echo "Node: $(node -v)    NPM: $(npm -v || echo 'npm not found')"
+else
+	echo "Warning: node not found in PATH"
+fi
+
+# Build frontend if present (handles both `frontened` and `frontend` directories)
+FRONT_DIR=""
+if [ -d "frontened" ]; then
+	FRONT_DIR="frontened"
+elif [ -d "frontend" ]; then
+	FRONT_DIR="frontend"
+fi
+
+if [ -n "$FRONT_DIR" ]; then
+	echo "Building frontend in \`$FRONT_DIR\`..."
+	cd "$FRONT_DIR"
+	if [ -f package-lock.json ] || [ -f npm-shrinkwrap.json ]; then
+		npm ci --silent
+	else
+		npm install --silent
+	fi
+	# Try to run build; if there's no build script, continue
+	if npm run build --silent; then
+		echo "Frontend build succeeded"
+	else
+		echo "No frontend build script or build failed; continuing"
+	fi
+	cd - >/dev/null
+fi
+
+# Prepare backend
+echo "Preparing backend..."
+cd backend
+
+if [ -f package-lock.json ] || [ -f npm-shrinkwrap.json ]; then
+	npm ci --only=production --silent
+else
+	npm install --only=production --silent
+fi
+
+# Optional: seed database when explicitly requested by environment variable
+if [ "${SEED_DB:-false}" = "true" ]; then
+	echo "SEED_DB=true -> seeding database (this may exit the script if seed script ends the process)..."
+	if [ -f seedDatabase.js ]; then
+		node seedDatabase.js
+	else
+		echo "seedDatabase.js not found; skipping seed"
+	fi
+fi
+
+echo "Starting backend server (node server.js)..."
+exec node server.js
+
