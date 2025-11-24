@@ -11,13 +11,36 @@ cd "$(dirname "$0")" || exit 1
 
 echo "=== Starting application ==="
 
-# Check if Node.js is available
-if ! command -v node >/dev/null 2>&1; then
-  echo "ERROR: Node.js not found in PATH"
+# Ensure Node is in PATH (Railway may need this)
+export PATH="/usr/local/bin:/usr/bin:/bin:$PATH"
+
+# Find node in common locations
+NODE_BIN=""
+for path in /nix/store/*/bin/node /usr/bin/node /usr/local/bin/node /opt/homebrew/bin/node; do
+  if [ -x "$path" ] 2>/dev/null; then
+    NODE_BIN="$path"
+    break
+  fi
+done
+
+# Try 'which' as fallback
+if [ -z "$NODE_BIN" ]; then
+  NODE_BIN=$(which node 2>/dev/null || true)
+fi
+
+# If still not found, try without checking executability (Railway edge case)
+if [ -z "$NODE_BIN" ]; then
+  NODE_BIN=$(command -v node 2>/dev/null || echo "")
+fi
+
+if [ -z "$NODE_BIN" ] || ! "$NODE_BIN" --version >/dev/null 2>&1; then
+  echo "ERROR: Node.js not found. Available in PATH:"
+  echo $PATH
   exit 1
 fi
 
-echo "Node: $(node -v)    NPM: $(npm -v)"
+echo "Node: $("$NODE_BIN" -v)"
+echo "NPM: $(npm --version)"
 
 # Build frontend if present
 FRONT_DIR=""
